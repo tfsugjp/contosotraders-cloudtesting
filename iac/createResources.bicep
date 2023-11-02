@@ -29,6 +29,9 @@ param prefixHyphenated string = 'contoso-traders'
 // sql
 param sqlServerHostName string = environment().suffixes.sqlServerHostname
 
+// use param to conditionally deploy private endpoint resources
+param deployPrivateEndpoints bool = false
+
 // variables
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -42,8 +45,6 @@ var kvSecretNameCartsApiEndpoint = 'cartsApiEndpoint'
 var kvSecretNameCartsInternalApiEndpoint = 'cartsInternalApiEndpoint'
 var kvSecretNameCartsDbConnStr = 'cartsDbConnectionString'
 var kvSecretNameImagesEndpoint = 'imagesEndpoint'
-var kvSecretNameCognitiveServicesEndpoint = 'cognitiveServicesEndpoint'
-var kvSecretNameCognitiveServicesAccountKey = 'cognitiveServicesAccountKey'
 var kvSecretNameAppInsightsConnStr = 'appInsightsConnectionString'
 var kvSecretNameUiCdnEndpoint = 'uiCdnEndpoint'
 var kvSecretNameVnetAcaSubnetId = 'vnetAcaSubnetId'
@@ -109,9 +110,6 @@ var ui2StgAccName = '${prefix}ui2${suffix}'
 // storage account (image classifier)
 var imageClassifierStgAccName = '${prefix}ic${suffix}'
 var imageClassifierWebsiteUploadsContainerName = 'website-uploads'
-
-// cognitive service (image recognition)
-var cognitiveServiceName = '${prefixHyphenated}-cs${suffix}'
 
 // cdn
 var cdnProfileName = '${prefixHyphenated}-cdn${suffix}'
@@ -261,12 +259,12 @@ resource kv 'Microsoft.KeyVault/vaults@2022-07-01' = {
   }
 
   // secret
-  resource kv_secretCartsInternalApiEndpoint 'secrets' = {
+  resource kv_secretCartsInternalApiEndpoint 'secrets' = if (deployPrivateEndpoints) {
     name: kvSecretNameCartsInternalApiEndpoint
     tags: resourceTags
     properties: {
       contentType: 'endpoint url (fqdn) of the (internal) carts api'
-      value: cartsinternalapiaca.properties.configuration.ingress.fqdn
+      value: deployPrivateEndpoints ? cartsinternalapiaca.properties.configuration.ingress.fqdn : ''
     }
   }
 
@@ -287,26 +285,6 @@ resource kv 'Microsoft.KeyVault/vaults@2022-07-01' = {
     properties: {
       contentType: 'endpoint url of the images cdn'
       value: 'https://${cdnprofile_imagesendpoint.properties.hostName}'
-    }
-  }
-
-  // secret
-  resource kv_secretCognitiveServicesEndpoint 'secrets' = {
-    name: kvSecretNameCognitiveServicesEndpoint
-    tags: resourceTags
-    properties: {
-      contentType: 'endpoint url of the cognitive services'
-      value: cognitiveservice.properties.endpoint
-    }
-  }
-
-  // secret
-  resource kv_secretCognitiveServicesAccountKey 'secrets' = {
-    name: kvSecretNameCognitiveServicesAccountKey
-    tags: resourceTags
-    properties: {
-      contentType: 'account key of the cognitive services'
-      value: cognitiveservice.listKeys().key1
     }
   }
 
@@ -943,23 +921,6 @@ resource imageclassifierstgacc 'Microsoft.Storage/storageAccounts@2022-09-01' = 
 }
 
 //
-// cognitive services (image recognition)
-// 
-
-resource cognitiveservice 'Microsoft.CognitiveServices/accounts@2022-10-01' = {
-  name: cognitiveServiceName
-  location: resourceLocation
-  tags: resourceTags
-  sku: {
-    name: 'S0'
-  }
-  kind: 'CognitiveServices'
-  properties: {
-    publicNetworkAccess: 'Enabled'
-  }
-}
-
-//
 // cdn
 //
 
@@ -1526,20 +1487,20 @@ resource jumpboxvmschedule 'Microsoft.DevTestLab/schedules@2018-09-15' = {
 // private dns zone
 //
 
-module privateDnsZone './createPrivateDnsZone.bicep' = {
+module privateDnsZone './createPrivateDnsZone.bicep' = if (deployPrivateEndpoints) {
   name: 'createPrivateDnsZone'
   params: {
-    privateDnsZoneName: join(skip(split(cartsinternalapiaca.properties.configuration.ingress.fqdn, '.'), 2), '.')
+    privateDnsZoneName: deployPrivateEndpoints ? join(skip(split(cartsinternalapiaca.properties.configuration.ingress.fqdn, '.'), 2), '.') : ''
     privateDnsZoneVnetId: vnet.id
     privateDnsZoneVnetLinkName: privateDnsZoneVnetLinkName
-    privateDnsZoneARecordName: join(take(split(cartsinternalapiaca.properties.configuration.ingress.fqdn, '.'), 2), '.')
-    privateDnsZoneARecordIp: cartsinternalapiacaenv.properties.staticIp
+    privateDnsZoneARecordName: deployPrivateEndpoints ? join(take(split(cartsinternalapiaca.properties.configuration.ingress.fqdn, '.'), 2), '.') : ''
+    privateDnsZoneARecordIp: deployPrivateEndpoints ? cartsinternalapiacaenv.properties.staticIp : ''
     resourceTags: resourceTags
   }
 }
 
 // aca environment (internal)
-resource cartsinternalapiacaenv 'Microsoft.App/managedEnvironments@2022-06-01-preview' = {
+resource cartsinternalapiacaenv 'Microsoft.App/managedEnvironments@2022-06-01-preview' = if (deployPrivateEndpoints) {
   name: cartsInternalApiAcaEnvName
   location: resourceLocation
   tags: resourceTags
@@ -1556,7 +1517,7 @@ resource cartsinternalapiacaenv 'Microsoft.App/managedEnvironments@2022-06-01-pr
 }
 
 // aca (internal)
-resource cartsinternalapiaca 'Microsoft.App/containerApps@2022-06-01-preview' = {
+resource cartsinternalapiaca 'Microsoft.App/containerApps@2022-06-01-preview' = if (deployPrivateEndpoints) {
   name: cartsInternalApiAcaName
   location: resourceLocation
   tags: resourceTags
