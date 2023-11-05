@@ -112,6 +112,13 @@ You will need following to get started:
     | `SUFFIX`           | Azureで一位にならなければならないリソースの前置詞を指定します (最大6文字, 小文字アルファベット,数字のみ。特殊文字、空白を含んではなりません). 例えば、'test51' や '1stg' です。                                                    |
     | `DEPLOYMENTREGION` | 次のうちのいずれかのAzureリージョン以外は指定できません。 `australiaeast`,`centralus`,`eastus`,`eastus2`,`japaneast`,`northcentralus`,`uksouth`,`westcentralus`,`westeurope` |
 
+3. (任意)もしも、プライベートエンドポイントのテストをしたい場合、variableに以下の値を設定してください。
+
+    | Variable Name      | Variable Value                                                                                                                                                                              |
+    | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+    | `DEPLOYPRIVATEENDPOINTS`           | `true`
+
+
 ### Deploy the Application
 
 1. Go to your forked repo's `Actions` tab, selecting the `contoso-traders-cloud-testing` workflow, and click on the `Run workflow` button.
