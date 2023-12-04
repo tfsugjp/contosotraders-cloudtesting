@@ -121,19 +121,19 @@ You will need following to get started:
 
 ### Deploy the Application
 
-1. Go to your forked repo's `Actions` tab, selecting the `contoso-traders-cloud-testing` workflow, and click on the `Run workflow` button.
+1. フォークしたレポジトリの`Actions`タブで`contoso-traders-cloud-testing`workflowを選択し、`Run workflow`ボタンを押してください。
 
-2. This github workflow will provision the necessary infrastructure to your Azure subscription as well as deploy the applications (APIs, UI) to the infrastructure. Note that the workflow might take about 15 mins to complete.
+2. このGitHub workflowはあなたのAzureサブスクリプションに必要なインフラストラクチャとアプリケーション（API, UI）を構築します。完了するまで少なくとも15分必要です。
 
   ![workflow-logs](./images/github-workflow.png)
 
 ### Verify the Deployment
 
-1. Once the workflow completes, the UI's accessible CDN endpoint URL will be displayed in the github workflow run.
+1. workflowが完了したら、UIからGitHub workflow実行中に表示されたCDNエンドポイントのURLにアクセスできるようになります。
 
     ![Endpoints in workflow logs](./images/ui-endpoint-github-workflow.png)
 
-2. Clicking on the URL above, will load the application in a new browser tab. You can then verify that the application is indeed up and running.
+2. 上記のURLをクリックすると、新しいブラウザータブにアプリケーションがロードされます。アプリケーションが実行できているか確認してください。
 
 ### Troubleshooting Deployment Errors
 
@@ -164,14 +164,16 @@ For further learning, you can run through some of the demo scripts listed below:
 
 ## Cost Considerations
 
-A quick note on costs considerations when you deploy the application to your Azure subscription:
+Azureサブスクリプションにデプロイするときのコスト考慮事項における注意点です。
 
-1. Azure Load Testing ([pricing details](https://azure.microsoft.com/pricing/details/load-testing/)): The number of virtual users and duration of the test are the key factors that determine the cost of the test. In this demo, the load tests are configured to use 5 virtual users and the test is set to run for 3 mins.
-2. Azure Kubernetes Service ([pricing details](https://azure.microsoft.com/pricing/details/kubernetes-service/)): The number of nodes and the number of hours that the cluster is running are the key factors that determine the cost of the cluster. In this demo, the cluster is configured to use 1 node (powered by vm scale sets) and the cluster is set to run 24x7 (you can manually stop the cluster when not in use). Because of a [limitation in the AKS bicep schema](https://github.com/Azure/bicep/issues/6974), the AKS cluster has to use premium SSD storage disks.
-3. Azure Container Apps ([pricing details](https://azure.microsoft.com/pricing/details/container-apps/)): Each instance has 0.5 vCPU and 1.0 GiB of memory. In this demo, the container app is configured to use 1 instance, but can autoscale out to max 3 instances under load.
-4. Azure Virtual Machines ([pricing details](https://azure.microsoft.com/pricing/details/virtual-machines/windows/)): The jumpbox VM uses the `Standard_D2s_v3` VM size, which has 2 vCPU and 8 GiB of memory. The jumpbox VMs are schedule to auto-shutdown at 1900 UTC daily. You can also manually stop & deallocate the VM when not in use.
-5. Github Actions / storage quota ([pricing details](https://docs.github.com/en/billing/managing-billing-for-github-actions/about-billing-for-github-actions#included-storage-and-minutes)): We've set the playwright test to enable recordings only on failures/retries. This brings the playwright report to ~55 MB when tests fail.
+1. Azure Load Testing([pricing details](https://azure.microsoft.com/pricing/details/load-testing/)):virtual usersとdurationがコストの重要な要因となります。このデモでは、5 virtual usersが3分間アクセスする設定にしています。
 
->
-> The above costs are based on the default configuration of the demo. You can modify the configuration to reduce the costs. For example, you can reduce the number of instances in the container app, reduce the number of virtual users in the load test, etc.
->
+2. Azure Kubernetes Service ([pricing details](https://azure.microsoft.com/pricing/details/kubernetes-service/)):node数とクラスターにおけるノードの実行時間はクラスターコストの重要な要因です。このデモではクラスターは1ノード（VM Scale set）が24時間ずっと稼働するように設定されています（不要な時はクラスターを手動で停止してください）。これは現在の[AKS bicepにおける制限事項](https://github.com/Azure/bicep/issues/6974)で、AKSクラスターはPremium SSDストレージを使っています。
+
+3. Azure Container Apps ([pricing details](https://azure.microsoft.com/pricing/details/container-apps/)):どのインスタンスも0.5 vCPUと1.0 GiBメモリを使っています。このデモではコンテナーアプリケーションは1インスタンスに設定していますが、autoscaleで最大3インスタンスまで増加します。
+
+4. Azure Virtual Machines ([pricing details](https://azure.microsoft.com/pricing/details/virtual-machines/windows/)):踏み台用のVMは`Standard_D2s_v3`で構成されており、2 vCPUと 8GiBメモリーを使います。踏み台VMはUTCの19:00（日本時間では朝4:00）に自動停止します。不要な時は手動で停止、解放してください。
+
+5. Github Actions / storage quota ([pricing details](https://docs.github.com/en/billing/managing-billing-for-github-actions/about-billing-for-github-actions#included-storage-and-minutes)):playwrite テストは失敗した実行のみ記録するように設定しています。これは失敗ごとに55MB未満のデータを保存しています。
+
+> 上記のコストはデフォルトのでも構成です。変更することでコストを削減することが可能です。例えば、container appsのインスタンスを減らすとか、実行時のVirtual userを減らすなどの工夫が可能です。
